@@ -10,6 +10,7 @@ import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +19,8 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
@@ -56,6 +59,22 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG, "concatMap demo");
         demoConcatMap();
 
+        //single demo
+        demoSingle();
+        //distinct demo
+        demoDistinct();
+        //debounce demo
+        demoDebounce();
+        //defer demo
+        demoDefer();
+        //last demo
+        demoLast();
+        //merge demo
+        demoMerge();
+        //reduce demo
+        demoReduce();
+        //scan demo
+        demoScan();
     }
 
     public void click(View view) {
@@ -395,4 +414,178 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * single：只会接受一个参数，而SingleObserver只会调用onError()或者onSuccess()
+     */
+    private void demoSingle() {
+        Single.just(new Random().nextInt())
+                .subscribe(new SingleObserver<Integer>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(Integer integer) {
+                        Log.e(TAG, "single : onSuccess : " + integer + "\n");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "single : onError : " + e.getMessage() + "\n");
+                    }
+                });
+    }
+
+    /**
+     * distinct：去重操作符
+     */
+    private void demoDistinct() {
+        Observable.just(1, 1, 1, 2, 2, 3, 4, 5)
+                .distinct()
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "distinct : " + integer + "\n");
+                    }
+                });
+    }
+
+    /**
+     * debounce：去除发送间隔时间小于指定时间的发射事件
+     */
+    private void demoDebounce() {
+        Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> e) throws Exception {
+                e.onNext(1);
+                Thread.sleep(400);
+                e.onNext(2);
+                Thread.sleep(505);
+                e.onNext(3);
+                Thread.sleep(100);
+                e.onNext(4);
+                Thread.sleep(605);
+                e.onNext(5);
+                Thread.sleep(510);
+                e.onComplete();
+            }
+        }).debounce(500, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "debouncd : " + Thread.currentThread().toString());
+                        Log.e(TAG, "debounce : " + integer + "\n");
+                    }
+                });
+    }
+
+    /**
+     * defer：？
+     */
+    private void demoDefer() {
+        Observable.defer(new Callable<ObservableSource<Integer>>() {
+            @Override
+            public ObservableSource<Integer> call() throws Exception {
+                return Observable.just(1, 2, 3);
+            }
+        }).subscribe(new Observer<Integer>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(Integer integer) {
+                Log.e(TAG, "defer : " + integer + "\n");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "defer : onError : " + e.getMessage() + "\n");
+            }
+
+            @Override
+            public void onComplete() {
+                Log.e(TAG, "defer : onComplete\n");
+            }
+        });
+    }
+
+    /**
+     * last：只取出可观察到的最后一个值或者满足条件的最后一项
+     */
+    private void demoLast() {
+        //last的参数表示当源为空的时候默认发射的数据
+//        Observable.<Integer>empty()
+//                .last(4)
+//                .subscribe(new Consumer<Integer>() {
+//                    @Override
+//                    public void accept(Integer integer) throws Exception {
+//                        Log.e(TAG,"last : "+integer+"\n");
+//                    }
+//                });
+
+        Observable.just(1, 2, 3)
+                .last(4)
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "last : " + integer + "\n");
+                    }
+                });
+    }
+
+
+    /**
+     * merge：将多个Observable结合起来，和concat的区别在于，不需要等到发射器A发送完所有时间再进行发射器B的发送
+     */
+    private void demoMerge() {
+        Observable.merge(Observable.just(1, 2), Observable.just(3, 4, 5))
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "merge: accept: " + integer + "\n");
+                    }
+                });
+    }
+
+
+    /**
+     * reduce：类似js的array的reduce方法，将每个数据累加起来，最终返回一个值
+     */
+    private void demoReduce() {
+        Observable.just(1, 2, 3)
+                .reduce(new BiFunction<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer integer, Integer integer2) throws Exception {
+                        return integer + integer2;
+                    }
+                }).subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer integer) throws Exception {
+                Log.e(TAG, "reduce : accept : " + integer + "\n");
+            }
+        });
+    }
+
+    /**
+     * scan：和reduce类似，区别在于reduce只输出最终结果，scan会在每次累加的时候调用accept
+     */
+    private void demoScan() {
+        Observable.just(1, 2, 3)
+                .scan(new BiFunction<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer integer, Integer integer2) throws Exception {
+                        return integer + integer2;
+                    }
+                }).subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer integer) throws Exception {
+                Log.e(TAG, "scan : accept : " + integer + "\n");
+            }
+        });
+    }
 }
