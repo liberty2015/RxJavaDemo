@@ -8,12 +8,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -27,6 +31,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -75,6 +80,30 @@ public class MainActivity extends AppCompatActivity {
         demoReduce();
         //scan demo
         demoScan();
+        //distinct demo
+        Log.e(TAG, "distinct demo");
+        demoDistinct();
+        //filter demo
+        Log.e(TAG, "filter demo");
+        demoFilter();
+        //buffer demo
+        Log.e(TAG, "buffer demo");
+        demoBuffer();
+        //timer demo
+        Log.e(TAG, "timer demo");
+        demoTimer();
+        //interval demo
+        Log.e(TAG, "interval demo");
+        demoInterval();
+        //skip demo
+        Log.e(TAG, "skip demo");
+        demoSkip();
+        //take demo
+        Log.e(TAG, "take demo");
+        demoTake();
+        //just demo
+        Log.e(TAG, "just demo");
+        demoJust();
     }
 
     public void click(View view) {
@@ -353,7 +382,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * flatMap：
+     * flatMap：将一个Observable通过某种方法转换为多个Observable，然后将这些分散的Observable合并到一个单一的Observable
+     * flatMap不能保证事件的顺序
+     * 使用场景：化解循环嵌套；连续请求两个接口，第一个接口的返回值是第二个接口的请求参数
      */
     private void demoFlatMap() {
         Observable.create(new ObservableOnSubscribe<Integer>() {
@@ -384,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * concatMap：
+     * concatMap：和flatMap相似，区别在于concatMap用的时链接，保证了顺序
      */
     private void demoConcatMap() {
         Observable.create(new ObservableOnSubscribe<Integer>() {
@@ -415,6 +446,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * <<<<<<< HEAD
      * single：只会接受一个参数，而SingleObserver只会调用onError()或者onSuccess()
      */
     private void demoSingle() {
@@ -452,6 +484,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * filter：过滤器
+     */
+    private void demoFilter() {
+        Observable.just(1, 20, 65, -5, 7, 19)
+                .filter(new Predicate<Integer>() {
+                    @Override
+                    public boolean test(Integer integer) throws Exception {
+                        return integer >= 10;
+                    }
+                }).subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer integer) throws Exception {
+                Log.e(TAG, "filter: " + integer + "\n");
+            }
+        });
+    }
+
+    /**
+     * buffer：buffer操作符接受两个参数：count和skip，用于将Observable中的数据按skip(步长)分成最大不超过count的buffer，
+     * 然后生成一个Observable
+     */
+    private void demoBuffer() {
+        Observable.just(1, 2, 3, 4, 5)
+                .buffer(3, 2)
+                .subscribe(new Consumer<List<Integer>>() {
+                    @Override
+                    public void accept(List<Integer> integers) throws Exception {
+                        Log.e(TAG, "buffer size: " + integers.size() + "\n");
+                        Log.e(TAG, "buffer value: ");
+                        for (Integer i :
+                                integers) {
+                            Log.e(TAG, i + "");
+                        }
+                        Log.e(TAG, "\n");
+                    }
+                });
+    }
+
+    /**
      * debounce：去除发送间隔时间小于指定时间的发射事件
      */
     private void demoDebounce() {
@@ -478,6 +549,24 @@ public class MainActivity extends AppCompatActivity {
                     public void accept(Integer integer) throws Exception {
                         Log.e(TAG, "debouncd : " + Thread.currentThread().toString());
                         Log.e(TAG, "debounce : " + integer + "\n");
+                        }
+                });
+
+    }
+
+    /*
+     * timer：定时任务，延迟指定时间后执行操作，默认在新线程
+     */
+    private void demoTimer() {
+        Log.e(TAG, "timer start: " + new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z", Locale.CHINA).format(new Date()));
+        Observable.timer(2, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Long>() {
+                    @Override
+                    public void accept(Long aLong) throws Exception {
+                        Log.e(TAG, "timer: " + aLong + " at " +
+                                new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z", Locale.CHINA).format(new Date()));
                     }
                 });
     }
@@ -538,6 +627,36 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /*
+     * interval：定时器，接受三个参数：第一次延迟、间隔时间、时间单位
+     */
+    private void demoInterval() {
+        Log.e(TAG, "interval start: " + new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z", Locale.CHINA).format(new Date()));
+        Observable.interval(3, 3, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Long>() {
+                    @Override
+                    public void accept(Long aLong) throws Exception {
+                        Log.e(TAG, "interval :" + aLong + " at " + new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z", Locale.CHINA).format(new Date()));
+                    }
+                });
+    }
+
+    /**
+     * skip：接受一个long型的参数count，表示跳过count个数目开始接收
+     */
+    private void demoSkip() {
+        Observable.just(1, 2, 3, 4, 5)
+                .skip(2)
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "skip: " + integer + "\n");
+                    }
+                });
+    }
+
 
     /**
      * merge：将多个Observable结合起来，和concat的区别在于，不需要等到发射器A发送完所有时间再进行发射器B的发送
@@ -548,6 +667,20 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void accept(Integer integer) throws Exception {
                         Log.e(TAG, "merge: accept: " + integer + "\n");
+                    }
+                });
+    }
+
+    /**
+     * take：接受一个long型的参数count，表示最多接收count个数据
+     */
+    private void demoTake() {
+        Flowable.fromArray(1, 2, 3, 4, 5)
+                .take(2)
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "take: " + integer + "\n");
                     }
                 });
     }
@@ -581,10 +714,37 @@ public class MainActivity extends AppCompatActivity {
                     public Integer apply(Integer integer, Integer integer2) throws Exception {
                         return integer + integer2;
                     }
+                });
+    }
+
+    /**
+     * just：将传入的数据转换为发射该数据的Observable，支持传入单个或多个数据
+     */
+    private void demoJust() {
+        Observable.just("1", "2", "3")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        Log.e(TAG, "accept: onNext: " + s + "\n");
+                    }
+                });
+    }
+
+
+    private void demoDoOnNext() {
+        Observable.just(1, 2, 3, 4)
+                .doOnNext(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.e(TAG, "doOnNext 保存 " + integer + "");
+                    }
                 }).subscribe(new Consumer<Integer>() {
             @Override
             public void accept(Integer integer) throws Exception {
                 Log.e(TAG, "scan : accept : " + integer + "\n");
+                Log.e(TAG, "");
             }
         });
     }
