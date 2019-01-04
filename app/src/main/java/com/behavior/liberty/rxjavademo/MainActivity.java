@@ -63,22 +63,29 @@ public class MainActivity extends AppCompatActivity {
         //concatMap demo
         Log.e(TAG, "concatMap demo");
         demoConcatMap();
-
         //single demo
+        Log.e(TAG,"single demo");
         demoSingle();
         //distinct demo
+        Log.e(TAG,"distinct demo");
         demoDistinct();
         //debounce demo
-        demoDebounce();
+//        Log.e(TAG,"debounce demo");
+//        demoDebounce();
         //defer demo
+        Log.e(TAG,"defer demo");
         demoDefer();
         //last demo
+        Log.e(TAG,"last demo");
         demoLast();
         //merge demo
+        Log.e(TAG,"merge demo");
         demoMerge();
         //reduce demo
+        Log.e(TAG,"reduce demo");
         demoReduce();
         //scan demo
+        Log.e(TAG,"scan demo");
         demoScan();
         //distinct demo
         Log.e(TAG, "distinct demo");
@@ -90,11 +97,11 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG, "buffer demo");
         demoBuffer();
         //timer demo
-        Log.e(TAG, "timer demo");
-        demoTimer();
+//        Log.e(TAG, "timer demo");
+//        demoTimer();
         //interval demo
-        Log.e(TAG, "interval demo");
-        demoInterval();
+//        Log.e(TAG, "interval demo");
+//        demoInterval();
         //skip demo
         Log.e(TAG, "skip demo");
         demoSkip();
@@ -104,6 +111,9 @@ public class MainActivity extends AppCompatActivity {
         //just demo
         Log.e(TAG, "just demo");
         demoJust();
+        //window demo
+        Log.e(TAG,"window demo");
+        demoWindow();
     }
 
     public void click(View view) {
@@ -446,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * <<<<<<< HEAD
+     *
      * single：只会接受一个参数，而SingleObserver只会调用onError()或者onSuccess()
      */
     private void demoSingle() {
@@ -554,7 +564,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /*
+    /**
      * timer：定时任务，延迟指定时间后执行操作，默认在新线程
      */
     private void demoTimer() {
@@ -627,7 +637,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    /*
+    /**
      * interval：定时器，接受三个参数：第一次延迟、间隔时间、时间单位
      */
     private void demoInterval() {
@@ -747,5 +757,31 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "");
             }
         });
+    }
+
+
+    /**
+     * ？
+     */
+    private void demoWindow(){
+        Observable.interval(1,TimeUnit.SECONDS)
+                .take(15)
+                .window(3,TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Observable<Long>>() {
+                    @Override
+                    public void accept(Observable<Long> longObservable) throws Exception {
+                        Log.e(TAG,"Window Sub Divide begin...\n");
+                        longObservable.subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Consumer<Long>() {
+                                    @Override
+                                    public void accept(Long aLong) throws Exception {
+                                        Log.e(TAG,"Window Next: "+aLong+"\n");
+                                    }
+                                });
+                    }
+                });
     }
 }
