@@ -46,56 +46,56 @@ public class MainActivity extends AppCompatActivity {
         img = (ImageView) findViewById(R.id.img);
 
         //create demo
-        Log.e(TAG, "create demo");
-        demoCreate();
-        //map demo
-        Log.e(TAG, "map demo");
-        demoMap();
-        //zip demo
-        Log.e(TAG, "zip demo");
-        demoZip();
-        //concat demo
-        Log.e(TAG, "concat demo");
-        demoConcat();
-        //flatMap demo
-        Log.e(TAG, "flatMap demo");
-        demoFlatMap();
-        //concatMap demo
-        Log.e(TAG, "concatMap demo");
-        demoConcatMap();
-        //single demo
-        Log.e(TAG,"single demo");
-        demoSingle();
-        //distinct demo
-        Log.e(TAG,"distinct demo");
-        demoDistinct();
+//        Log.e(TAG, "create demo");
+//        demoCreate();
+//        //map demo
+//        Log.e(TAG, "map demo");
+//        demoMap();
+//        //zip demo
+//        Log.e(TAG, "zip demo");
+//        demoZip();
+//        //concat demo
+//        Log.e(TAG, "concat demo");
+//        demoConcat();
+//        //flatMap demo
+//        Log.e(TAG, "flatMap demo");
+//        demoFlatMap();
+//        //concatMap demo
+//        Log.e(TAG, "concatMap demo");
+//        demoConcatMap();
+//        //single demo
+//        Log.e(TAG,"single demo");
+//        demoSingle();
+//        //distinct demo
+//        Log.e(TAG,"distinct demo");
+//        demoDistinct();
         //debounce demo
 //        Log.e(TAG,"debounce demo");
 //        demoDebounce();
-        //defer demo
+//        defer demo
         Log.e(TAG,"defer demo");
         demoDefer();
-        //last demo
-        Log.e(TAG,"last demo");
-        demoLast();
-        //merge demo
-        Log.e(TAG,"merge demo");
-        demoMerge();
-        //reduce demo
-        Log.e(TAG,"reduce demo");
-        demoReduce();
-        //scan demo
-        Log.e(TAG,"scan demo");
-        demoScan();
-        //distinct demo
-        Log.e(TAG, "distinct demo");
-        demoDistinct();
-        //filter demo
-        Log.e(TAG, "filter demo");
-        demoFilter();
-        //buffer demo
-        Log.e(TAG, "buffer demo");
-        demoBuffer();
+//        //last demo
+//        Log.e(TAG,"last demo");
+//        demoLast();
+//        //merge demo
+//        Log.e(TAG,"merge demo");
+//        demoMerge();
+//        //reduce demo
+//        Log.e(TAG,"reduce demo");
+//        demoReduce();
+//        //scan demo
+//        Log.e(TAG,"scan demo");
+//        demoScan();
+//        //distinct demo
+//        Log.e(TAG, "distinct demo");
+//        demoDistinct();
+//        //filter demo
+//        Log.e(TAG, "filter demo");
+//        demoFilter();
+//        //buffer demo
+//        Log.e(TAG, "buffer demo");
+//        demoBuffer();
         //timer demo
 //        Log.e(TAG, "timer demo");
 //        demoTimer();
@@ -103,17 +103,19 @@ public class MainActivity extends AppCompatActivity {
 //        Log.e(TAG, "interval demo");
 //        demoInterval();
         //skip demo
-        Log.e(TAG, "skip demo");
-        demoSkip();
-        //take demo
-        Log.e(TAG, "take demo");
-        demoTake();
-        //just demo
-        Log.e(TAG, "just demo");
-        demoJust();
+//        Log.e(TAG, "skip demo");
+//        demoSkip();
+//        //take demo
+//        Log.e(TAG, "take demo");
+//        demoTake();
+//        //just demo
+//        Log.e(TAG, "just demo");
+//        demoJust();
         //window demo
-        Log.e(TAG,"window demo");
-        demoWindow();
+//        Log.e(TAG, "window demo");
+//        demoWindow();
+
+        demoSomeType();
     }
 
     public void click(View view) {
@@ -456,7 +458,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     *
      * single：只会接受一个参数，而SingleObserver只会调用onError()或者onSuccess()
      */
     private void demoSingle() {
@@ -559,7 +560,7 @@ public class MainActivity extends AppCompatActivity {
                     public void accept(Integer integer) throws Exception {
                         Log.e(TAG, "debouncd : " + Thread.currentThread().toString());
                         Log.e(TAG, "debounce : " + integer + "\n");
-                        }
+                    }
                 });
 
     }
@@ -582,7 +583,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * defer：？
+     * defer：与其他创建操作符不同，Defer会等待观察者订阅它，然后它会生成一个新的Observable，
+     * 它会为每个用户重新执行此操作，因此尽管每个用户可能认为它订阅了相同的Observable，但实际上
+     * 每个Observable的数据序列都可能不一样。
+     * https://www.jianshu.com/p/c83996149f5b
      */
     private void demoDefer() {
         Observable.defer(new Callable<ObservableSource<Integer>>() {
@@ -611,6 +615,36 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "defer : onComplete\n");
             }
         });
+    }
+
+    private void demoSomeType(){
+        SomeType instance=new SomeType();
+        Observable<String> stringObservable = instance.valueObservable();
+        instance.setValue("Some Value");
+        stringObservable.subscribe(new Consumer<String>() {
+            @Override
+            public void accept(String s) throws Exception {
+                Log.e(TAG, "demoSomeType:"+s+"\n");
+            }
+        });
+    }
+
+    static class SomeType{
+        private String value;
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        public Observable<String> valueObservable(){
+//            return Observable.just(value);
+            return Observable.defer(new Callable<ObservableSource<? extends String>>() {
+                @Override
+                public ObservableSource<? extends String> call() throws Exception {
+                    return Observable.just(value);
+                }
+            });
+        }
     }
 
     /**
@@ -743,6 +777,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * doOnNext、doOnError、doOnCompleted...
+     * 在Observable上发生onNext、onError、onCompleted等事件时的调用的回调函数
+     */
     private void demoDoOnNext() {
         Observable.just(1, 2, 3, 4)
                 .doOnNext(new Consumer<Integer>() {
@@ -761,27 +799,41 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * ？
+     * Window类似Buffer，但是Window是根据需要从源Observable发出的数据分割成多个Observable
+     * 比如按照数量或者时间
      */
-    private void demoWindow(){
-        Observable.interval(1,TimeUnit.SECONDS)
+    private void demoWindow() {
+        Observable.interval(1, TimeUnit.SECONDS)
                 .take(15)
-                .window(3,TimeUnit.SECONDS)
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Consumer<Long>() {
+//                    @Override
+//                    public void accept(Long aLong) throws Exception {
+//                        Log.e(TAG,"Window Next: "+aLong+"\n");
+//                    }
+//                });
+//                .window(4)
+                .window(4, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<Observable<Long>>() {
                     @Override
                     public void accept(Observable<Long> longObservable) throws Exception {
-                        Log.e(TAG,"Window Sub Divide begin...\n");
+                        Log.e(TAG, "Window Sub Divide begin..." + System.currentTimeMillis() + "\n");
                         longObservable.subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(new Consumer<Long>() {
                                     @Override
                                     public void accept(Long aLong) throws Exception {
-                                        Log.e(TAG,"Window Next: "+aLong+"\n");
+                                        Log.e(TAG, "Window Next: " + aLong + "\n");
                                     }
                                 });
                     }
                 });
     }
+
+
+
+
 }
